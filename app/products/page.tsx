@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ProductActionsMenu } from "@/components/ui/product-actions-menu"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getProductsWithVariants } from "@/lib/supabase-queries"
@@ -67,39 +67,43 @@ export default async function ProductsPage() {
           </Card>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative">
+        <div className="space-y-4 md:flex md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <div className="relative w-full md:w-[300px]">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Hledat produkty..." className="pl-8 w-[300px]" />
+              <Input placeholder="Hledat produkty..." className="pl-8" />
             </div>
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Kategorie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Všechny kategorie</SelectItem>
-                <SelectItem value="obleceni">Oblečení</SelectItem>
-                <SelectItem value="doplnky">Doplňky</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Všechny</SelectItem>
-                <SelectItem value="active">Aktivní</SelectItem>
-                <SelectItem value="inactive">Neaktivní</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4">
+              <Select>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Kategorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Všechny kategorie</SelectItem>
+                  <SelectItem value="obleceni">Oblečení</SelectItem>
+                  <SelectItem value="doplnky">Doplňky</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Všechny</SelectItem>
+                  <SelectItem value="active">Aktivní</SelectItem>
+                  <SelectItem value="inactive">Neaktivní</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Button asChild>
-            <Link href="/products/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Přidat produkt
-            </Link>
-          </Button>
+          <div className="flex justify-between md:justify-end">
+            <Button asChild>
+              <Link href="/products/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Přidat produkt
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -200,31 +204,7 @@ export default async function ProductsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0" onClick={e => e.stopPropagation()}>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/products/${product.id}`} onClick={e => e.stopPropagation()}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Upravit
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/products/${product.id}?tab=variants`} onClick={e => e.stopPropagation()}>
-                                    <Package className="mr-2 h-4 w-4" />
-                                    Varianty
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600" onClick={e => e.stopPropagation()}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Smazat
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <ProductActionsMenu productId={product.id} />
                           </TableCell>
                         </TableRow>
                       </Link>

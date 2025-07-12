@@ -79,6 +79,8 @@ export default function ProductDetailPage() {
   // Image dialog state
   const [imageDialog, setImageDialog] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [altText, setAltText] = useState("")
 
   useEffect(() => {
     loadProduct()
@@ -177,16 +179,44 @@ export default function ProductDetailPage() {
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    // Update sort_order values pouze v UI
+    // Update sort_order values
     const updatedImages = items.map((img, index) => ({
       ...img,
       sort_order: index
     }))
 
+    // Aktualizuj UI okamžitě
     setProduct({
       ...product,
       product_images: updatedImages
     })
+
+    // Uložení pořadí do databáze
+    try {
+      const response = await fetch(`/api/products/${productId}/images`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          images: updatedImages.map(img => ({
+            id: img.id,
+            sort_order: img.sort_order
+          }))
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error("Chyba při ukládání pořadí")
+      }
+
+      toast.success("Pořadí obrázků bylo uloženo")
+    } catch (error) {
+      console.error("Error saving image order:", error)
+      toast.error("Chyba při ukládání pořadí obrázků")
+      // Obnovit původní pořadí při chybě
+      loadProduct()
+    }
   }
 
   const deleteImage = async (imageId: string) => {
@@ -204,6 +234,43 @@ export default function ProductDetailPage() {
     } catch (error) {
       console.error("Error deleting image:", error)
       toast.error("Chyba při mazání obrázku")
+    }
+  }
+
+  const uploadImage = async () => {
+    if (!selectedFile) {
+      toast.error("Prosím vyberte soubor")
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+      
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+      if (altText) {
+        formData.append("altText", altText)
+      }
+      
+      const response = await fetch(`/api/products/${productId}/images`, {
+        method: "POST",
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error("Chyba při nahrávání obrázku")
+      }
+
+      toast.success("Obrázek byl úspěšně nahrán")
+      setImageDialog(false)
+      setSelectedFile(null)
+      setAltText("")
+      loadProduct()
+    } catch (error) {
+      console.error("Error uploading image:", error)
+      toast.error("Chyba při nahrávání obrázku")
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -235,10 +302,37 @@ export default function ProductDetailPage() {
 
   const totalStock = product ? product.product_variants.reduce((sum, variant) => sum + variant.stock_quantity, 0) : 0
 
-  // Dummy saveProduct function to fix missing reference
-  const saveProduct = () => {
-    // TODO: Implement save logic
-    toast.success("Produkt uložen (mock)")
+  const saveProduct = async () => {
+    try {
+      setSaving(true)
+      
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!response.ok) {
+        throw new Error("Chyba při ukládání produktu")
+      }
+
+      const updatedProduct = await response.json()
+      
+      // Aktualizuj lokální stav produktu
+      setProduct(prev => prev ? {
+        ...prev,
+        ...updatedProduct
+      } : null)
+      
+      toast.success("Produkt byl úspěšně uložen")
+    } catch (error) {
+      console.error("Error saving product:", error)
+      toast.error("Chyba při ukládání produktu")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -595,32 +689,55 @@ export default function ProductDetailPage() {
                       <DialogTitle>Nahrát nový obrázek</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
-                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                      <div 
+                        className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                        onClick={() => document.getElementById('file-upload')?.click()}
+                      >
                         <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                         <p className="text-sm text-muted-foreground">
-                          Přetáhněte obrázek sem nebo klikněte pro výběr
+                          {selectedFile ? selectedFile.name : "Přetáhněte obrázek sem nebo klikněte pro výběr"}
                         </p>
                         <input 
+                          id="file-upload"
                           type="file" 
                           accept="image/*" 
                           className="hidden"
                           onChange={(e) => {
-                            // Handle file upload logic here
-                            console.log("File selected:", e.target.files?.[0])
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              setSelectedFile(file)
+                            }
                           }}
                         />
                       </div>
+                      
+                      {selectedFile && (
+                        <div className="space-y-2">
+                          <Label htmlFor="alt-text">Alternativní text (volitelné)</Label>
+                          <Input
+                            id="alt-text"
+                            value={altText}
+                            onChange={(e) => setAltText(e.target.value)}
+                            placeholder="Popis obrázku pro přístupnost"
+                          />
+                        </div>
+                      )}
+                      
                       <div className="flex gap-2">
                         <Button 
-                          onClick={() => setImageDialog(false)}
+                          onClick={uploadImage}
                           className="flex-1"
-                          disabled={uploadingImage}
+                          disabled={uploadingImage || !selectedFile}
                         >
                           {uploadingImage ? "Nahrávám..." : "Nahrát"}
                         </Button>
                         <Button 
                           variant="outline" 
-                          onClick={() => setImageDialog(false)}
+                          onClick={() => {
+                            setImageDialog(false)
+                            setSelectedFile(null)
+                            setAltText("")
+                          }}
                         >
                           Zrušit
                         </Button>
