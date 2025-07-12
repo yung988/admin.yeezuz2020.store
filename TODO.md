@@ -8,27 +8,28 @@ Tento dokument obsahuje přehled všech dummy/nefunkčních tlačítek a funkcí
 
   - [x] Upravený formulář s propojenými state a odesíláním dat na API
   - [x] Vytvořena API route pro ukládání nových produktů
-- [ ] **Tlačítko "Nahrát obrázky"** - nemá funkcionalitu
+- [x] **Tlačítko "Nahrát obrázky"** - nemá funkcionalitu
 
 ## 2. Stránka objednávek (`/orders/page.tsx`)
 
 - [x] **Nahradit mock data** skutečnými daty z databáze
 - [x] **Implementovat API pro načítání objednávek**
-- [ ] **Přidat filtrování a vyhledávání** v objednávkách
-- [ ] **Přidat export objednávek**
+- [x] **Přidat filtrování a vyhledávání** v objednávkách
+- [x] **Přidat export objednávek**
 
 ## 3. Detailní stránka objednávky (`/orders/[id]/page.tsx`)
 
-- [ ] **Nahradit mock data** skutečnými daty z databáze
-- [ ] **Tlačítko "Aktualizovat status"** (řádek 85) - implementovat funkci
-- [ ] **Select pro změnu statusu** - přidat funkcionalitu ukládání
-- [ ] **API pro aktualizaci statusu objednávky**
-- [ ] **Email notifikace** při změně statusu
+- [x] **Nahradit mock data** skutečnými daty z databáze
+- [x] **Vytvořena API route pro detail objednávky**
+- [x] **Tlačítko "Aktualizovat status"** (řádek 85) - implementovat funkci
+- [x] **Select pro změnu statusu** - přidat funkcionalitu ukládání
+- [x] **API pro aktualizaci statusu objednávky**
+- [x] **Email notifikace** při změně statusu
 
 ## 4. Stránka zákazníků (`/customers/page.tsx`)
 
-- [ ] **Nahradit mock data** skutečnými daty z databáze
-- [ ] **API pro načítání zákazníků**
+- [x] **Nahradit mock data** skutečnými daty z databáze
+- [x] **API pro načítání zákazníků**
 - [ ] **Detailní stránka zákazníka** s historií objednávek
 - [ ] **Export seznamu zákazníků**
 
@@ -65,12 +66,12 @@ Tento dokument obsahuje přehled všech dummy/nefunkčních tlačítek a funkcí
 
 ### 7.1 Objednávky
 - [x] **GET /api/orders** - načítání objednávek
-- [ ] **GET /api/orders/[id]** - detail objednávky
-- [ ] **PATCH /api/orders/[id]** - aktualizace statusu objednávky
-- [ ] **POST /api/orders/[id]/email** - odeslání email notifikace
+- [x] **GET /api/orders/[id]** - detail objednávky
+- [x] **PATCH /api/orders/[id]** - aktualizace statusu objednávky
+- [x] **POST /api/orders/[id]/email** - odeslání email notifikace
 
 ### 7.2 Zákazníci
-- [ ] **GET /api/customers** - načítání zákazníků
+- [x] **GET /api/customers** - načítání zákazníků
 - [ ] **GET /api/customers/[id]** - detail zákazníka
 - [ ] **GET /api/customers/[id]/orders** - historie objednávek zákazníka
 
@@ -146,3 +147,11 @@ Tento dokument obsahuje přehled všech dummy/nefunkčních tlačítek a funkcí
 ---
 
 *Poslední aktualizace: 12. 7. 2025*
+
+## Poznámky k dokončeným úkolům
+
+### Zákazníci (dokončeno)
+- Nahrazena mock data skutečnými daty z databáze Supabase na stránce `/customers/page.tsx`
+- Vytvořen API endpoint `/api/customers` pro načítání zákazníků s agregovanými daty objednávek
+- Implementováno filtrování zákazníků podle jména a emailu
+- Přidán loading state během načítání dat

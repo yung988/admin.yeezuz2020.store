@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Eye } from "lucide-react"
+import { Search, Eye, Download } from "lucide-react"
 
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,6 +50,34 @@ export default function OrdersPage() {
     return matchesSearch && matchesStatus
   })
 
+  const exportToCSV = () => {
+    const csvData = filteredOrders.map(order => ({
+      'Číslo objednávky': order.id,
+      'Datum': new Date(order.date).toLocaleDateString("cs-CZ"),
+      'Zákazník - Jméno': order.customer.name,
+      'Zákazník - Email': order.customer.email,
+      'Celková částka': order.total,
+      'Status': getStatusBadge(order.status).label
+    }))
+    
+    const csvContent = [
+      Object.keys(csvData[0] || {}).join(';'),
+      ...csvData.map(row => Object.values(row).join(';'))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `objednavky_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
+
   return (
     <>
       <AdminHeader title="Objednávky" breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Objednávky" }]} />
@@ -76,6 +104,10 @@ export default function OrdersPage() {
               <SelectItem value="delivered">Doručeno</SelectItem>
             </SelectContent>
           </Select>
+          <Button onClick={exportToCSV} variant="outline" className="ml-auto">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
         </div>
 
         <Card>

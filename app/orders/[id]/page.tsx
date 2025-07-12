@@ -4,12 +4,65 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { mockOrders } from "@/lib/mock-data"
+import { notFound } from "next/navigation"
+import { OrderStatusForm } from "@/components/order-status-form"
+
+interface OrderItem {
+  product: string
+  quantity: number
+  price: number
+}
+
+interface ShippingAddress {
+  street: string
+  city: string
+  postalCode: string
+  country: string
+}
+
+interface Customer {
+  name: string
+  email: string
+  phone: string
+}
+
+interface Order {
+  id: string
+  customer: Customer
+  items: OrderItem[]
+  total: number
+  status: string
+  date: string
+  shippingAddress: ShippingAddress
+}
+
+async function getOrder(id: string): Promise<Order | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders/${id}`, {
+      cache: 'no-store'
+    })
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null
+      }
+      throw new Error('Failed to fetch order')
+    }
+    
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching order:', error)
+    return null
+  }
+}
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  // V reálné aplikaci by se data načítala podle ID
-  const order = mockOrders[0] // Mock data
+  const order = await getOrder(id)
+  
+  if (!order) {
+    notFound()
+  }
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
