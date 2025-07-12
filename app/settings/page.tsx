@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function SettingsPage() {
   return (
     <>
-      <AdminHeader title="Nastavení" breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Nastavení" }]} />
+      <AdminHeader title="Nastavení" breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Nastavení" }]} />
       <div className="flex flex-1 flex-col gap-6 p-4">
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>

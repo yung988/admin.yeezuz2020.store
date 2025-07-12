@@ -30,14 +30,14 @@ export default async function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-6 w-full">
       {/* Homepage režim toggle */}
-      <div className="mb-6">
+      <div>
         <HomepageModeToggle />
       </div>
 
       {/* Metriky */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Celkové tržby</CardTitle>
@@ -125,14 +125,14 @@ export default async function AdminDashboard() {
                 recentOrders.map((order) => (
                   <div key={order.id} className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{order.orderNumber || order.id}</p>
+                      <p className="text-sm font-medium">{order.order_number || order.id}</p>
                       <p className="text-xs text-muted-foreground">
-                        {order.customerName || order.customerEmail}
+                        {order.customer_name || order.customer_email}
                       </p>
                     </div>
                     <div className="text-right space-y-1">
                       <p className="text-sm font-medium">
-                        {(order.totalAmount / 100).toLocaleString()} Kč
+                        {(order.total_amount / 100).toLocaleString()} Kč
                       </p>
                       <Badge variant={getStatusBadge(order.status).variant}>
                         {getStatusBadge(order.status).label}

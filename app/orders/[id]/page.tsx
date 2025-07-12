@@ -25,8 +25,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       <AdminHeader
         title={`Objednávka ${order.id}`}
         breadcrumbs={[
-          { label: "Dashboard", href: "/admin" },
-          { label: "Objednávky", href: "/admin/orders" },
+          { label: "Dashboard", href: "/" },
+          { label: "Objednávky", href: "/orders" },
           { label: order.id },
         ]}
       />

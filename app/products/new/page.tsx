@@ -31,8 +31,8 @@ export default function NewProductPage() {
       <AdminHeader
         title="Přidat produkt"
         breadcrumbs={[
-          { label: "Dashboard", href: "/admin" },
-          { label: "Produkty", href: "/admin/products" },
+          { label: "Dashboard", href: "/" },
+          { label: "Produkty", href: "/products" },
           { label: "Přidat produkt" },
         ]}
       />
@@ -127,7 +127,7 @@ export default function NewProductPage() {
         <div className="flex items-center gap-4">
           <Button>Uložit produkt</Button>
           <Button variant="outline" asChild>
-            <Link href="/admin/products">Zrušit</Link>
+            <Link href="/products">Zrušit</Link>
           </Button>
         </div>
       </div>

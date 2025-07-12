@@ -20,7 +20,7 @@ export default function CustomersPage() {
 
   return (
     <>
-      <AdminHeader title="Zákazníci" breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Zákazníci" }]} />
+      <AdminHeader title="Zákazníci" breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Zákazníci" }]} />
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center gap-4">
           <div className="relative">

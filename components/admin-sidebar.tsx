@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { createClient } from "@/lib/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -33,7 +34,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { createClient } from "@/lib/supabase/client";
 
 const menuItems = [
   {
@@ -69,6 +69,11 @@ export function AdminSidebar() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Prefetch na hover pro rychlejší navigaci
+  const handleMouseEnter = (url: string) => {
+    router.prefetch(url);
+  };
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -82,7 +87,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" variant="inset" className="min-h-screen" defaultOpen={false}>
+    <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -108,7 +113,7 @@ export function AdminSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                    <Link href={item.url}>
+                    <Link href={item.url} prefetch={true}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

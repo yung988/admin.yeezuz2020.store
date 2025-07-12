@@ -38,7 +38,7 @@ export default function OrdersPage() {
 
   return (
     <>
-      <AdminHeader title="Objednávky" breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Objednávky" }]} />
+      <AdminHeader title="Objednávky" breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Objednávky" }]} />
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -97,7 +97,7 @@ export default function OrdersPage() {
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/orders/${order.id}`}>
+                        <Link href={`/orders/${order.id}`}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>

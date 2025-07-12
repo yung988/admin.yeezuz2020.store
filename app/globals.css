@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* View Transitions API support */
+@view-transition {
+  navigation: auto;
+}
+
+/* Page transition animations */
+.page-transition {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+/* Loading animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Faster transitions for interactive elements */
+.sidebar-item {
+  @apply transition-colors duration-150 ease-in-out;
+}
+
+/* Prefetch indication */
+.prefetching {
+  @apply opacity-70;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
