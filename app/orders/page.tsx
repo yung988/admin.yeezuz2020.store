@@ -9,12 +9,30 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Eye, Download } from "lucide-react"
+import { Search, Eye, Download, Package, Truck } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+interface Order {
+  id: string
+  order_number: string
+  customer_email: string
+  customer_name: string
+  customer_phone: string
+  total_amount: number
+  status: string
+  created_at: string
+  packeta_pickup_point_id?: string
+  packeta_pickup_point_name?: string
+  packeta_label_id?: string
+  packeta_tracking_number?: string
+}
 
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -43,20 +61,110 @@ export default function OrdersPage() {
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+      order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_email?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
 
     return matchesSearch && matchesStatus
   })
 
+  const createPacketaShipment = async (orderId: string) => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/packeta/create-shipment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Úspěch",
+          description: data.message || "Packeta zásilka byla vytvořena",
+        })
+        // Refresh orders
+        const ordersResponse = await fetch("/api/orders")
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json()
+          setOrders(ordersData)
+        }
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Chyba",
+          description: error.error || "Chyba při vytváření zásilky",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Error creating shipment:', error)
+      toast({
+        title: "Chyba",
+        description: "Chyba při vytváření zásilky",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const downloadPacketaLabel = async (orderId: string) => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/packeta/generate-labels', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderIds: [orderId] })
+      })
+
+      if (response.ok) {
+        // Stáhni PDF
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = `packeta-label-${orderId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        
+        toast({
+          title: "Úspěch",
+          description: "Štítek byl stažen",
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Chyba",
+          description: error.error || "Chyba při generování štítku",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Error generating label:', error)
+      toast({
+        title: "Chyba",
+        description: "Chyba při generování štítku",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const exportToCSV = () => {
     const csvData = filteredOrders.map(order => ({
-      'Číslo objednávky': order.id,
-      'Datum': new Date(order.date).toLocaleDateString("cs-CZ"),
-      'Zákazník - Jméno': order.customer.name,
-      'Zákazník - Email': order.customer.email,
-      'Celková částka': order.total,
+      'Číslo objednávky': order.order_number || order.id,
+      'Datum': new Date(order.created_at).toLocaleDateString("cs-CZ"),
+      'Zákazník - Jméno': order.customer_name,
+      'Zákazník - Email': order.customer_email,
+      'Celková částka': (order.total_amount / 100).toLocaleString(),
       'Status': getStatusBadge(order.status).label
     }))
     
@@ -123,34 +231,64 @@ export default function OrdersPage() {
                   <TableHead>Zákazník</TableHead>
                   <TableHead>Celková částka</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[70px]">Akce</TableHead>
+                  <TableHead>Packeta</TableHead>
+                  <TableHead className="w-[100px]">Akce</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredOrders.map((order) => (
-                  <Link key={order.id} href={`/orders/${order.id}`} passHref legacyBehavior>
-                    <TableRow className="cursor-pointer hover:bg-muted/50">
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{new Date(order.date).toLocaleDateString("cs-CZ")}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{order.customer.name}</div>
-                          <div className="text-sm text-muted-foreground">{order.customer.email}</div>
+                  <TableRow key={order.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      <Link href={`/orders/${order.id}`} className="hover:underline">
+                        {order.order_number || order.id}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{new Date(order.created_at).toLocaleDateString("cs-CZ")}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{order.customer_name}</div>
+                        <div className="text-sm text-muted-foreground">{order.customer_email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{(order.total_amount / 100).toLocaleString()} Kč</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadge(order.status).variant}>{getStatusBadge(order.status).label}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {order.packeta_pickup_point_id ? (
+                        <div className="flex items-center gap-1">
+                          {order.packeta_label_id ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => downloadPacketaLabel(order.id)}
+                              disabled={loading}
+                            >
+                              <Truck className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => createPacketaShipment(order.id)}
+                              disabled={loading}
+                            >
+                              <Package className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                      </TableCell>
-                      <TableCell>{order.total} Kč</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadge(order.status).variant}>{getStatusBadge(order.status).label}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" asChild onClick={e => e.stopPropagation()}>
-                          <Link href={`/orders/${order.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </Link>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/orders/${order.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>

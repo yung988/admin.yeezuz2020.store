@@ -6,50 +6,67 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { notFound } from "next/navigation"
 import { OrderStatusForm } from "@/components/order-status-form"
+import { PacketaShipmentCard } from "@/components/packeta-shipment-card"
 
 interface OrderItem {
-  product: string
+  id: string
+  product_id: string
+  variant_id: string
   quantity: number
   price: number
-}
-
-interface ShippingAddress {
-  street: string
-  city: string
-  postalCode: string
-  country: string
-}
-
-interface Customer {
-  name: string
-  email: string
-  phone: string
+  products?: {
+    name: string
+    sku: string
+  }
+  product_variants?: {
+    size: string
+    sku: string
+  }
 }
 
 interface Order {
   id: string
-  customer: Customer
-  items: OrderItem[]
-  total: number
+  order_number: string
+  customer_email: string
+  customer_name: string
+  customer_phone: string
+  total_amount: number
   status: string
-  date: string
-  shippingAddress: ShippingAddress
+  created_at: string
+  updated_at: string
+  shipping_method: string
+  shipping_address: any
+  packeta_pickup_point_id?: string
+  packeta_pickup_point_name?: string
+  packeta_label_id?: string
+  packeta_tracking_number?: string
+  order_items: OrderItem[]
 }
 
 async function getOrder(id: string): Promise<Order | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders/${id}`, {
-      cache: 'no-store'
-    })
+    const { createClient } = await import('@/utils/supabase/server')
+    const supabase = await createClient()
     
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null
-      }
-      throw new Error('Failed to fetch order')
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          *,
+          products (name, sku),
+          product_variants (size, sku)
+        )
+      `)
+      .eq('id', id)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching order:', error)
+      return null
     }
     
-    return response.json()
+    return order
   } catch (error) {
     console.error('Error fetching order:', error)
     return null
@@ -93,21 +110,33 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="font-medium">{order.customer.name}</p>
-                <p className="text-sm text-muted-foreground">{order.customer.email}</p>
-                <p className="text-sm text-muted-foreground">{order.customer.phone}</p>
+                <p className="font-medium">{order.customer_name}</p>
+                <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+                <p className="text-sm text-muted-foreground">{order.customer_phone || '-'}</p>
               </div>
               <Separator />
               <div>
-                <p className="font-medium mb-2">Doručovací adresa</p>
-                <div className="text-sm text-muted-foreground">
-                  <p>{order.shippingAddress.street}</p>
-                  <p>
-                    {order.shippingAddress.postalCode} {order.shippingAddress.city}
-                  </p>
-                  <p>{order.shippingAddress.country}</p>
-                </div>
+                <p className="font-medium mb-2">Způsob dopravy</p>
+                <p className="text-sm text-muted-foreground">{order.shipping_method || 'Neuvedeno'}</p>
+                {order.packeta_pickup_point_name && (
+                  <p className="text-sm text-muted-foreground">Výdejní místo: {order.packeta_pickup_point_name}</p>
+                )}
               </div>
+              {order.shipping_address && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="font-medium mb-2">Doručovací adresa</p>
+                    <div className="text-sm text-muted-foreground">
+                      <p>{order.shipping_address.street}</p>
+                      <p>
+                        {order.shipping_address.postal_code} {order.shipping_address.city}
+                      </p>
+                      <p>{order.shipping_address.country}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -147,20 +176,31 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span>Datum objednávky:</span>
-                <span>{new Date(order.date).toLocaleDateString("cs-CZ")}</span>
+                <span>{new Date(order.created_at).toLocaleDateString("cs-CZ")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Číslo objednávky:</span>
-                <span className="font-medium">{order.id}</span>
+                <span className="font-medium">{order.order_number || order.id}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-medium">
                 <span>Celková částka:</span>
-                <span>{order.total} Kč</span>
+                <span>{(order.total_amount / 100).toLocaleString()} Kč</span>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Packeta zásilka - zobrazí se jen pokud má objednávka Packeta výdejní místo */}
+        {order.packeta_pickup_point_id && (
+          <PacketaShipmentCard 
+            orderId={order.id}
+            hasPacketaPickupPoint={!!order.packeta_pickup_point_id}
+            packetaLabelId={order.packeta_label_id}
+            packetaTrackingNumber={order.packeta_tracking_number}
+            packetaPickupPointName={order.packeta_pickup_point_name}
+          />
+        )}
 
         {/* Objednané produkty */}
         <Card>
@@ -169,22 +209,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {order.items.map((item, index) => (
+              {order.order_items.map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <p className="font-medium">{item.product}</p>
+                    <p className="font-medium">{item.products?.name || 'Neznámý produkt'}</p>
                     <p className="text-sm text-muted-foreground">Množství: {item.quantity}x</p>
+                    {item.product_variants?.size && (
+                      <p className="text-sm text-muted-foreground">Velikost: {item.product_variants.size}</p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{item.price * item.quantity} Kč</p>
-                    <p className="text-sm text-muted-foreground">{item.price} Kč/ks</p>
+                    <p className="font-medium">{((item.price * item.quantity) / 100).toLocaleString()} Kč</p>
+                    <p className="text-sm text-muted-foreground">{(item.price / 100).toLocaleString()} Kč/ks</p>
                   </div>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between items-center font-medium text-lg">
                 <span>Celkem:</span>
-                <span>{order.total} Kč</span>
+                <span>{(order.total_amount / 100).toLocaleString()} Kč</span>
               </div>
             </div>
           </CardContent>
