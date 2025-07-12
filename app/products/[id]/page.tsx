@@ -30,7 +30,6 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { getProductById } from "@/lib/supabase-queries"
 
 interface Product {
   id: string
@@ -98,6 +97,14 @@ export default function ProductDetailPage() {
   useEffect(() => {
     loadProduct()
   }, [productId])
+
+  const getProductById = async (id: string) => {
+    const response = await fetch(`/api/products/${id}`)
+    if (!response.ok) {
+      throw new Error("Failed to fetch product")
+    }
+    return response.json()
+  }
 
   const loadProduct = async () => {
     try {

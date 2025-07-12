@@ -1,6 +1,5 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { createClient } from "./lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "./lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -14,7 +13,7 @@ export async function middleware(request: NextRequest) {
 
   // Všechny ostatní stránky vyžadují autentifikaci
   try {
-    const supabase = await createClient();
+    const { supabase, response } = createClient(request);
     const {
       data: { user },
       error,
@@ -45,14 +44,14 @@ export async function middleware(request: NextRequest) {
     }
     */
 
+    return response;
+
   } catch (error) {
     console.error("Admin middleware error:", error);
     url.pathname = "/auth/signin";
     url.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
-
-  return NextResponse.next();
 }
 
 export const config = {

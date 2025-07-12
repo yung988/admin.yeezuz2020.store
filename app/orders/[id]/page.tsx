@@ -6,7 +6,8 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { mockOrders } from "@/lib/mock-data"
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
+export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   // V reálné aplikaci by se data načítala podle ID
   const order = mockOrders[0] // Mock data
 

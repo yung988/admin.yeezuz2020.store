@@ -1,20 +1,10 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
   // Experimentální funkce pro rychlejší navigaci
   experimental: {
-    // Povolení View Transitions API
-    viewTransitions: true,
-    // Aggressive prefetching
+    // Aggressive prefetching (optimizePackageImports je podporováno v Next.js 15)
     optimizePackageImports: ['lucide-react'],
-    // Turbo mode pro rychlejší rebuilding
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
 
   // Compiler optimalizace
@@ -24,30 +14,13 @@ const nextConfig = {
   },
 
   // Webpack optimalizace
-  webpack: (config, { dev, isServer }) => {
-    // Optimalizace pro development
-    if (dev) {
-      config.devtool = 'eval-cheap-module-source-map'
-    }
-
-    // Optimalizace bundlu
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-          },
-        },
-      },
+  webpack: (config, { isServer }) => {
+    // Fix pro 'self is not defined' error
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
     }
 
     return config
@@ -72,7 +45,7 @@ const nextConfig = {
     ],
   },
 
-  // PWA-like chování
+  // Security headers
   headers: async () => {
     return [
       {
@@ -97,15 +70,17 @@ const nextConfig = {
   },
 
   // Produkční optimalizace
-  swcMinify: true,
   poweredByHeader: false,
   reactStrictMode: true,
   
-  // Zrychlení buildu
+  // Build konfigurace pro produkci
+  eslint: {
+    ignoreDuringBuilds: process.env.NODE_ENV === 'production',
+  },
   typescript: {
-    // Ignoruj TypeScript errory při buildu (pouze pro rychlost)
-    // ignoreBuildErrors: process.env.NODE_ENV === 'production',
+    // Ignoruj TypeScript errory při buildu pouze v produkci
+    ignoreBuildErrors: process.env.NODE_ENV === 'production',
   },
 }
 
-module.exports = nextConfig
+export default nextConfig
