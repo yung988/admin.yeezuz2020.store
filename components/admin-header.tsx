@@ -1,6 +1,4 @@
-import React from "react"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+import React from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,14 +6,16 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface AdminHeaderProps {
-  title: string
+  title: string;
   breadcrumbs?: Array<{
-    label: string
-    href?: string
-  }>
+    label: string;
+    href?: string;
+  }>;
 }
 
 export function AdminHeader({ title, breadcrumbs }: AdminHeaderProps) {
@@ -43,5 +43,5 @@ export function AdminHeader({ title, breadcrumbs }: AdminHeaderProps) {
       )}
       {!breadcrumbs && <h1 className="text-lg font-semibold">{title}</h1>}
     </header>
-  )
+  );
 }

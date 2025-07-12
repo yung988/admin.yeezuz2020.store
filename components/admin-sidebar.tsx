@@ -1,9 +1,25 @@
-"use client"
-import { BarChart3, Package, ShoppingCart, Users, Settings, Store, Moon, Sun, LogOut } from "lucide-react"
-import { useTheme } from "next-themes"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-
+"use client";
+import {
+  BarChart3,
+  LogOut,
+  Moon,
+  Package,
+  Settings,
+  ShoppingCart,
+  Store,
+  Sun,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -16,54 +32,67 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/sidebar";
+import { createClient } from "@/lib/supabase/client";
 
 const menuItems = [
   {
     title: "Dashboard",
-    url: "/admin",
+    url: "/",
     icon: BarChart3,
   },
   {
     title: "Produkty",
-    url: "/admin/products",
+    url: "/products",
     icon: Package,
   },
   {
     title: "Objednávky",
-    url: "/admin/orders",
+    url: "/orders",
     icon: ShoppingCart,
   },
   {
     title: "Zákazníci",
-    url: "/admin/customers",
+    url: "/customers",
     icon: Users,
   },
   {
     title: "Nastavení",
-    url: "/admin/settings",
+    url: "/settings",
     icon: Settings,
   },
-]
+];
 
 export function AdminSidebar() {
-  const { setTheme, theme } = useTheme()
-  const pathname = usePathname()
+  const { setTheme, theme } = useTheme();
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push("/auth/signin");
+      router.refresh();
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // I přes chybu přesměruj na přihlášení
+      router.push("/auth/signin");
+    }
+  };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon" variant="inset" className="min-h-screen" defaultOpen={false}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/admin">
+              <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Store className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Fashion Store</span>
+                  <span className="font-semibold">Yeezuz Store</span>
                   <span className="text-xs">Admin Panel</span>
                 </div>
               </Link>
@@ -78,7 +107,7 @@ export function AdminSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -108,7 +137,7 @@ export function AdminSidebar() {
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   <span>{theme === "dark" ? "Světlý režim" : "Tmavý režim"}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
                   <span>Odhlásit se</span>
                 </DropdownMenuItem>
@@ -119,5 +148,5 @@ export function AdminSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

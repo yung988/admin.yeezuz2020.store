@@ -1,29 +1,13 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import type React from "react";
+import { AdminSidebar } from "@/components/admin-sidebar";
 
-const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "Admin Dashboard - Fashion E-shop",
-  description: "Moderní admin dashboard pro e-shop s oblečením",
-    generator: 'v0.dev'
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="cs" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  )
+    <div className="flex min-h-screen">
+      <AdminSidebar />
+      <main className="flex-1 overflow-y-auto p-6">
+        {children}
+      </main>
+    </div>
+  );
 }
