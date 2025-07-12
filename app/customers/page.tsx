@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { mockCustomers } from "@/lib/mock-data"
 import { Search } from "lucide-react"
+import Link from "next/link"
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -52,14 +53,16 @@ export default function CustomersPage() {
               </TableHeader>
               <TableBody>
                 {filteredCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell>{customer.email}</TableCell>
-                    <TableCell>{customer.phone}</TableCell>
-                    <TableCell>{customer.orders}</TableCell>
-                    <TableCell>{customer.totalSpent.toLocaleString()} Kč</TableCell>
-                    <TableCell>{new Date(customer.registeredAt).toLocaleDateString("cs-CZ")}</TableCell>
-                  </TableRow>
+                  <Link key={customer.id} href={`/customers/${customer.id}`} passHref legacyBehavior>
+                    <TableRow className="cursor-pointer hover:bg-muted/50">
+                      <TableCell className="font-medium">{customer.name}</TableCell>
+                      <TableCell>{customer.email}</TableCell>
+                      <TableCell>{customer.phone}</TableCell>
+                      <TableCell>{customer.orders}</TableCell>
+                      <TableCell>{customer.totalSpent.toLocaleString()} Kč</TableCell>
+                      <TableCell>{new Date(customer.registeredAt).toLocaleDateString("cs-CZ")}</TableCell>
+                    </TableRow>
+                  </Link>
                 ))}
               </TableBody>
             </Table>

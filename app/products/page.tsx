@@ -127,106 +127,107 @@ export default async function ProductsPage() {
                     const totalStock = product.product_variants?.reduce((sum: number, variant: any) => sum + (variant.stock_quantity || 0), 0) || 0;
                     const mainImage = product.product_images?.find((img: any) => img.sort_order === 0) || product.product_images?.[0];
                     const variantsCount = product.product_variants?.length || 0;
-                    
                     return (
-                      <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell>
-                          <div className="relative">
-                            <Image
-                              src={mainImage?.url || "/placeholder.svg"}
-                              alt={product.name}
-                              width={64}
-                              height={64}
-                              className="rounded-md object-cover border"
-                            />
-                            {product.product_images && product.product_images.length > 1 && (
-                              <Badge variant="secondary" className="absolute -top-2 -right-2 text-xs px-1">
-                                +{product.product_images.length - 1}
-                              </Badge>
+                      <Link key={product.id} href={`/products/${product.id}`} passHref legacyBehavior>
+                        <TableRow className="cursor-pointer hover:bg-muted/50" style={{ cursor: 'pointer' }}>
+                          <TableCell>
+                            <div className="relative">
+                              <Image
+                                src={mainImage?.url || "/placeholder.svg"}
+                                alt={product.name}
+                                width={64}
+                                height={64}
+                                className="rounded-md object-cover border"
+                              />
+                              {product.product_images && product.product_images.length > 1 && (
+                                <Badge variant="secondary" className="absolute -top-2 -right-2 text-xs px-1">
+                                  +{product.product_images.length - 1}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{product.name}</div>
+                              {product.description && (
+                                <div className="text-sm text-muted-foreground line-clamp-1">
+                                  {product.description.substring(0, 50)}...
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                              {product.sku || "—"}
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            {product.category ? (
+                              <Badge variant="outline">{product.category}</Badge>
+                            ) : (
+                              "—"
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{product.name}</div>
-                            {product.description && (
-                              <div className="text-sm text-muted-foreground line-clamp-1">
-                                {product.description.substring(0, 50)}...
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                            {product.sku || "—"}
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          {product.category ? (
-                            <Badge variant="outline">{product.category}</Badge>
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
-                        <TableCell className="font-mono">
-                          {((product.price || 0) / 100).toLocaleString()} Kč
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Package className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm">{variantsCount}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {totalStock < 10 && totalStock > 0 && (
-                              <AlertTriangle className="h-3 w-3 text-orange-500" />
-                            )}
-                            {totalStock === 0 && (
-                              <AlertTriangle className="h-3 w-3 text-red-500" />
-                            )}
-                            <span className={`text-sm ${
-                              totalStock === 0 ? "text-red-600 font-semibold" : 
-                              totalStock < 10 ? "text-orange-600" : 
-                              "text-green-600"
-                            }`}>
-                              {totalStock} ks
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={product.status === "active" ? "default" : "secondary"}>
-                            {product.status === "active" ? "Aktivní" : "Neaktivní"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/products/${product.id}`}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Upravit
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/products/${product.id}?tab=variants`}>
-                                  <Package className="mr-2 h-4 w-4" />
-                                  Varianty
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Smazat
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {((product.price || 0) / 100).toLocaleString()} Kč
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Package className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm">{variantsCount}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {totalStock < 10 && totalStock > 0 && (
+                                <AlertTriangle className="h-3 w-3 text-orange-500" />
+                              )}
+                              {totalStock === 0 && (
+                                <AlertTriangle className="h-3 w-3 text-red-500" />
+                              )}
+                              <span className={`text-sm ${
+                                totalStock === 0 ? "text-red-600 font-semibold" : 
+                                totalStock < 10 ? "text-orange-600" : 
+                                "text-green-600"
+                              }`}>
+                                {totalStock} ks
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={product.status === "active" ? "default" : "secondary"}>
+                              {product.status === "active" ? "Aktivní" : "Neaktivní"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0" onClick={e => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/products/${product.id}`} onClick={e => e.stopPropagation()}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Upravit
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/products/${product.id}?tab=variants`} onClick={e => e.stopPropagation()}>
+                                    <Package className="mr-2 h-4 w-4" />
+                                    Varianty
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600" onClick={e => e.stopPropagation()}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Smazat
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      </Link>
                     );
                   })
                 ) : (

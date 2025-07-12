@@ -82,27 +82,29 @@ export default function OrdersPage() {
               </TableHeader>
               <TableBody>
                 {filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{new Date(order.date).toLocaleDateString("cs-CZ")}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{order.customer.name}</div>
-                        <div className="text-sm text-muted-foreground">{order.customer.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{order.total} Kč</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadge(order.status).variant}>{getStatusBadge(order.status).label}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/orders/${order.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <Link key={order.id} href={`/orders/${order.id}`} passHref legacyBehavior>
+                    <TableRow className="cursor-pointer hover:bg-muted/50">
+                      <TableCell className="font-medium">{order.id}</TableCell>
+                      <TableCell>{new Date(order.date).toLocaleDateString("cs-CZ")}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{order.customer.name}</div>
+                          <div className="text-sm text-muted-foreground">{order.customer.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{order.total} Kč</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadge(order.status).variant}>{getStatusBadge(order.status).label}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" asChild onClick={e => e.stopPropagation()}>
+                          <Link href={`/orders/${order.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  </Link>
                 ))}
               </TableBody>
             </Table>

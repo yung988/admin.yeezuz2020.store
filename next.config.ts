@@ -2,10 +2,10 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   // Experimentální funkce pro rychlejší navigaci
-  experimental: {
-    // Aggressive prefetching (optimizePackageImports je podporováno v Next.js 15)
-    optimizePackageImports: ['lucide-react'],
-  },
+  // experimental: {
+  //   // Aggressive prefetching (optimizePackageImports je podporováno v Next.js 15)
+  //   optimizePackageImports: ['lucide-react'],
+  // },
 
   // Compiler optimalizace
   compiler: {
@@ -42,12 +42,36 @@ const nextConfig: NextConfig = {
         protocol: 'https', 
         hostname: '**.supabase.in',
       },
+      {
+        protocol: 'https',
+        hostname: '6gtahwcca6a0qxzw.public.blob.vercel-storage.com',
+      },
     ],
   },
 
   // Security headers
   headers: async () => {
     return [
+      // Dlouhá cache pouze pro statické assets z /public
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/public/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Ostatní cesty - bezpečnostní hlavičky a kratší cache
       {
         source: '/(.*)',
         headers: [
@@ -59,14 +83,13 @@ const nextConfig: NextConfig = {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
-          // Cache statické soubory
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },
-    ]
+    ];
   },
 
   // Produkční optimalizace
