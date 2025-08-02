@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model accounts {
+  id                       String    @id
+  account_id               String
+  provider_id              String
+  user_id                  String
+  access_token             String?
+  refresh_token            String?
+  id_token                 String?
+  access_token_expires_at  DateTime? @db.Timestamp(6)
+  refresh_token_expires_at DateTime? @db.Timestamp(6)
+  scope                    String?
+  password                 String?
+  created_at               DateTime  @default(now()) @db.Timestamp(6)
+  updated_at               DateTime  @default(now()) @db.Timestamp(6)
+  users                    users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "accounts_user_id_users_id_fk")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order_items {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id         String            @db.Uuid
+  product_id       String            @db.Uuid
+  variant_id       String?           @db.Uuid
+  quantity         Int
+  price            Int
+  created_at       DateTime          @default(now()) @db.Timestamp(6)
+  orders           orders            @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "order_items_order_id_orders_id_fk")
+  products         products          @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_items_product_id_products_id_fk")
+  product_variants product_variants? @relation(fields: [variant_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_items_variant_id_product_variants_id_fk")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model orders {
+  id                           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_email               String
+  customer_name                String?
+  total_amount                 Int
+  currency                     String        @default("CZK")
+  status                       String        @default("pending")
+  shipping_method              String?
+  shipping_cost                Int?
+  shipping_address             Json?         @db.Json
+  stripe_session_id            String?       @unique(map: "orders_stripe_session_id_unique")
+  stripe_payment_id            String?
+  airtable_id                  String?       @unique(map: "orders_airtable_id_unique")
+  created_at                   DateTime      @default(now()) @db.Timestamp(6)
+  updated_at                   DateTime      @default(now()) @db.Timestamp(6)
+  order_number                 String?       @unique(map: "orders_order_number_unique")
+  customer_phone               String?
+  payment_status               String        @default("pending")
+  order_notes                  String?
+  packeta_pickup_point_id      String?
+  packeta_pickup_point_name    String?
+  packeta_label_id             String?
+  packeta_tracking_number      String?
+  shipped_at                   DateTime?     @db.Timestamp(6)
+  delivered_at                 DateTime?     @db.Timestamp(6)
+  packeta_shipment_id          String?
+  packeta_label_url            String?
+  packeta_tracking_url         String?
+  packeta_pickup_point_address String?
+  idempotency_key              String?       @unique
+  order_items                  order_items[]
+
+  @@index([idempotency_key], map: "idx_orders_idempotency_key")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model packeta_pickup_points {
+  id                      String   @id @unique(map: "ux_packeta_pickup_points_id")
+  name                    String
+  city                    String
+  street                  String?
+  zip                     String?
+  country                 String   @default("CZ")
+  carrier_id              Int?
+  carrier_pickup_point_id String?
+  latitude                String?
+  longitude               String?
+  details                 Json?    @db.Json
+  last_updated            DateTime @default(now()) @db.Timestamp(6)
+
+  @@index([id], map: "idx_packeta_pickup_points_id")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model product_images {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id    String   @db.Uuid
+  url           String
+  alt_text      String?
+  sort_order    Int      @default(0)
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @default(now()) @db.Timestamp(6)
+  is_main_image Boolean? @default(false)
+  products      products @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_images_product_id_products_id_fk")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model product_variants {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id      String        @db.Uuid
+  size            String
+  sku             String        @unique(map: "product_variants_sku_unique")
+  stock_quantity  Int           @default(0)
+  price_override  Int?
+  stripe_price_id String?       @unique(map: "product_variants_stripe_price_id_unique")
+  created_at      DateTime      @default(now()) @db.Timestamp(6)
+  updated_at      DateTime      @default(now()) @db.Timestamp(6)
+  status          String?       @default("active")
+  order_items     order_items[]
+  products        products      @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_variants_product_id_products_id_fk")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model products {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  description       String?
+  price             Int
+  category          String?
+  sku               String?            @unique(map: "products_sku_unique")
+  status            String             @default("active")
+  airtable_id       String?            @unique(map: "products_airtable_id_unique")
+  stripe_product_id String?            @unique(map: "products_stripe_product_id_unique")
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime           @default(now()) @db.Timestamp(6)
+  order_items       order_items[]
+  product_images    product_images[]
+  product_variants  product_variants[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model sessions {
+  id         String   @id
+  expires_at DateTime @db.Timestamp(6)
+  token      String   @unique(map: "sessions_token_unique")
+  ip_address String?
+  user_agent String?
+  user_id    String
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sessions_user_id_users_id_fk")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model shipping_methods {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code               String    @unique
+  name               String
+  description        String?
+  price              Int       @default(0)
+  estimated_days_min Int?
+  estimated_days_max Int?
+  is_active          Boolean?  @default(true)
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  updated_at         DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([code], map: "idx_shipping_methods_code")
+  @@index([is_active], map: "idx_shipping_methods_is_active")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id             String     @id
+  email          String     @unique(map: "users_email_unique")
+  email_verified Boolean    @default(false)
+  name           String?
+  image          String?
+  created_at     DateTime   @default(now()) @db.Timestamp(6)
+  updated_at     DateTime   @default(now()) @db.Timestamp(6)
+  role           String     @default("user")
+  accounts       accounts[]
+  sessions       sessions[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model verifications {
+  id         String   @id
+  identifier String
+  value      String
+  expires_at DateTime @db.Timestamp(6)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+}

@@ -1,68 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "./lib/supabase/middleware";
+import { updateSession } from "./lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
-  // Výjimky - stránky které nepotřebují autentifikaci
-  const publicPaths = ["/auth/signin", "/auth/signup", "/auth/error", "/unauthorized"];
+  // Veřejné cesty - nepotřebují autentizaci
+  const publicPaths = [
+    "/auth/signin", 
+    "/auth/signup", 
+    "/auth/error", 
+    "/auth/confirm",
+    "/unauthorized"
+  ];
   
   if (publicPaths.includes(url.pathname)) {
     return NextResponse.next();
   }
 
-  // Všechny ostatní stránky vyžadují autentifikaci
-  try {
-    const { supabase, response } = createClient(request);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    // Pokud není přihlášený nebo je chyba, přesměruj na přihlášení
-    if (error || !user) {
-      console.log("Admin access denied - no user or error:", error?.message);
-      url.pathname = "/auth/signin";
-      url.searchParams.set("redirect", request.nextUrl.pathname);
-      return NextResponse.redirect(url);
+  // API routes - rozdělení na veřejné a chráněné
+  if (url.pathname.startsWith("/api/")) {
+    // Veřejné API routes - žádná autentifikace
+    if (
+      url.pathname.startsWith("/api/stripe/") || 
+      url.pathname.startsWith("/api/packeta/") ||
+      url.pathname.startsWith("/api/auth/")
+    ) {
+      return NextResponse.next();
     }
-
-    console.log("Admin access allowed for user:", user.email);
-
-    // Dočasně vypneme kontrolu role pro testování
-    // TODO: Zapnout až bude databáze připravena
-    /*
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (userData && userData.role !== 'admin' && userData.role !== 'editor') {
-      url.pathname = "/unauthorized";
-      return NextResponse.redirect(url);
+    
+    // Admin API routes - vyžadují Supabase autentizaci
+    if (url.pathname.startsWith("/api/admin/")) {
+      return await updateSession(request);
     }
-    */
-
-    return response;
-
-  } catch (error) {
-    console.error("Admin middleware error:", error);
-    url.pathname = "/auth/signin";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+    
+    // Ostatní API routes - bez autentizace
+    return NextResponse.next();
   }
+
+  // Všechny ostatní stránky (admin rozhraní) vyžadují autentizaci
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

@@ -75,7 +75,7 @@ export default function CustomerDetailPage() {
         <CardContent>
           <p>Email: {customer.email}</p>
           <p>Telefon: {customer.phone || '-'}</p>
-          <p>Celkově utraceno: {customer.totalSpent}</p>
+          pCelkově utraceno: {customer.stats?.totalSpent?.toLocaleString() || 0} Kč/p
         </CardContent>
       </Card>
 
@@ -94,14 +94,14 @@ export default function CustomerDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customer.orders.map(order => (
+              {customer.recentOrders?.map(order => (
                 <TableRow key={order.id}>
                   <TableCell>{order.id}</TableCell>
                   <TableCell>{order.status}</TableCell>
-                  <TableCell>{order.total_amount}</TableCell>
+                  <TableCell>{((order.total_amount || 0) / 100).toLocaleString()} Kč</TableCell>
                   <TableCell>{new Date(order.created_at).toLocaleDateString("cs-CZ")}</TableCell>
                 </TableRow>
-              ))}
+              )) || []}
             </TableBody>
           </Table>
         </CardContent>

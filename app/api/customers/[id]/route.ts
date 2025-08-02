@@ -34,8 +34,8 @@ export async function GET(
 
     // Výpočet agregovaných dat
     const totalOrders = customer.orders.length;
-    const totalSpent = customer.orders.reduce((sum: number, order: any) => sum + order.total_amount, 0);
-    const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+    const totalSpent = customer.orders.reduce((sum: number, order: any) = sum + (order.total_amount || 0), 0) / 100;
+    const averageOrderValue = totalOrders  0 ? totalSpent / totalOrders : 0;
 
     // Posledních 5 objednávek
     const recentOrders = customer.orders

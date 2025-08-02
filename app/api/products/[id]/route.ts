@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 
+// Public API for single product (no authentication required)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,13 +18,11 @@ export async function GET(
         product_images (*)
       `)
       .eq("id", id)
+      .eq("status", "active")
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    if (!data) {
+      console.error("Error fetching product:", error);
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
@@ -37,32 +36,13 @@ export async function GET(
   }
 }
 
+// PATCH method not allowed for public API
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const { data, error } = await supabase
-      .from("products")
-      .update(body)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error updating product:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    { error: "Method not allowed. Use admin API for updating products." },
+    { status: 405 }
+  );
 }

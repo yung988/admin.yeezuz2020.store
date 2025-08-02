@@ -20,6 +20,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 
+import { apiClient } from "@/lib/api-client";
+
 type ProductVariant = {
   id: string
   size: string
@@ -86,18 +88,14 @@ export default function ProductDetailPage() {
     loadProduct()
   }, [productId])
 
-  const getProductById = async (id: string) => {
-    const response = await fetch(`/api/products/${id}`)
-    if (!response.ok) {
-      throw new Error("Failed to fetch product")
-    }
-    return response.json()
-  }
-
   const loadProduct = async () => {
     try {
       setLoading(true)
-      const data = await getProductById(productId)
+      const response = await apiClient.get(`/api/admin/products/${productId}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch product")
+      }
+      const data = await response.json()
       
       if (!data) {
         throw new Error("Produkt nenalezen")
@@ -121,24 +119,16 @@ export default function ProductDetailPage() {
     }
   }
 
-  // ...funkce je definována výše, zde odstraněna duplicita...
-
   const saveVariant = async () => {
     try {
       const url = editingVariant 
-        ? `/api/products/${productId}/variants/${editingVariant.id}`
-        : `/api/products/${productId}/variants`
+        ? `/api/admin/products/${productId}/variants/${editingVariant.id}`
+        : `/api/admin/products/${productId}/variants`
       
-      const method = editingVariant ? "PATCH" : "POST"
+      const response = editingVariant 
+        ? await apiClient.patch(url, variantForm)
+        : await apiClient.post(url, variantForm)
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(variantForm)
-      })
-
       if (!response.ok) {
         throw new Error("Chyba při ukládání varianty")
       }
@@ -156,9 +146,7 @@ export default function ProductDetailPage() {
 
   const deleteVariant = async (variantId: string) => {
     try {
-      const response = await fetch(`/api/products/${productId}/variants/${variantId}`, {
-        method: "DELETE"
-      })
+      const response = await apiClient.delete(`/api/admin/products/${productId}/variants/${variantId}`)
 
       if (!response.ok) {
         throw new Error("Chyba při mazání varianty")
@@ -179,31 +167,13 @@ export default function ProductDetailPage() {
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    // Update sort_order values
-    const updatedImages = items.map((img, index) => ({
-      ...img,
-      sort_order: index
-    }))
+    const updatedImages = items.map((img, index) => ({ ...img, sort_order: index }))
 
-    // Aktualizuj UI okamžitě
-    setProduct({
-      ...product,
-      product_images: updatedImages
-    })
+    setProduct({ ...product, product_images: updatedImages })
 
-    // Uložení pořadí do databáze
     try {
-      const response = await fetch(`/api/products/${productId}/images`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          images: updatedImages.map(img => ({
-            id: img.id,
-            sort_order: img.sort_order
-          }))
-        })
+      const response = await apiClient.patch(`/api/admin/products/${productId}/images`, {
+        images: updatedImages.map(img => ({ id: img.id, sort_order: img.sort_order }))
       })
 
       if (!response.ok) {
@@ -214,16 +184,13 @@ export default function ProductDetailPage() {
     } catch (error) {
       console.error("Error saving image order:", error)
       toast.error("Chyba při ukládání pořadí obrázků")
-      // Obnovit původní pořadí při chybě
       loadProduct()
     }
   }
 
   const deleteImage = async (imageId: string) => {
     try {
-      const response = await fetch(`/api/products/${productId}/images/${imageId}`, {
-        method: "DELETE"
-      })
+      const response = await apiClient.delete(`/api/admin/products/${productId}/images/${imageId}`)
 
       if (!response.ok) {
         throw new Error("Chyba při mazání obrázku")
@@ -252,9 +219,10 @@ export default function ProductDetailPage() {
         formData.append("altText", altText)
       }
       
-      const response = await fetch(`/api/products/${productId}/images`, {
+      const response = await fetchWithAuth(`/api/admin/products/${productId}/images`, {
         method: "POST",
-        body: formData
+        body: formData,
+        // Content-Type se nastaví automaticky pro FormData
       })
 
       if (!response.ok) {
@@ -306,13 +274,7 @@ export default function ProductDetailPage() {
     try {
       setSaving(true)
       
-      const response = await fetch(`/api/products/${productId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      })
+      const response = await apiClient.patch(`/api/admin/products/${productId}`, formData)
 
       if (!response.ok) {
         throw new Error("Chyba při ukládání produktu")
@@ -320,11 +282,7 @@ export default function ProductDetailPage() {
 
       const updatedProduct = await response.json()
       
-      // Aktualizuj lokální stav produktu
-      setProduct(prev => prev ? {
-        ...prev,
-        ...updatedProduct
-      } : null)
+      setProduct(prev => prev ? { ...prev, ...updatedProduct } : null)
       
       toast.success("Produkt byl úspěšně uložen")
     } catch (error) {
@@ -392,15 +350,16 @@ export default function ProductDetailPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="price">Cena (v haléřích)</Label>
+                  <Label htmlFor="price">Cena (Kč)</Label>
                   <Input
                     id="price"
                     type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                    step="0.01"
+                    value={formData.price ? (formData.price / 100) : ''}
+                    onChange={(e) => setFormData({ ...formData, price: Math.round((parseFloat(e.target.value) || 0) * 100) })}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {((formData.price || 0) / 100).toLocaleString()} Kč
+                    Zadejte cenu v korunách (např. 1600 pro 1600 Kč)
                   </p>
                 </div>
                 <div>
@@ -523,17 +482,18 @@ export default function ProductDetailPage() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="variant-price">Přepsání ceny (volitelné)</Label>
+                        <Label htmlFor="variant-price">Přepsání ceny (volitelné, Kč)</Label>
                         <Input
                           id="variant-price"
                           type="number"
-                          value={variantForm.price_override || ""}
-                          onChange={(e) => setVariantForm({ ...variantForm, price_override: e.target.value ? parseInt(e.target.value) : null })}
+                          step="0.01"
+                          value={variantForm.price_override ? (variantForm.price_override / 100) : ""}
+                          onChange={(e) => setVariantForm({ ...variantForm, price_override: e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null })}
                           placeholder="Ponechat prázdné pro výchozí cenu"
                         />
                         {variantForm.price_override && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {((variantForm.price_override || 0) / 100).toLocaleString()} Kč
+                            Cena varianty: {((variantForm.price_override || 0) / 100).toLocaleString()} Kč
                           </p>
                         )}
                       </div>

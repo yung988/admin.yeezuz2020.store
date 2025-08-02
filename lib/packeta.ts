@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const packetaApi = axios.create({
-  baseURL: process.env.PACKETA_API_URL,
+  baseURL: process.env.PACKETA_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,7 +22,7 @@ interface OrderData {
 export const createPacketaShipment = async (orderData: OrderData) => {
   try {
     const response = await packetaApi.post('/packet', {
-      apiKey: process.env.PACKETA_API_KEY,
+      apiPassword: process.env.PACKETA_API_PASSWORD,
       packetAttributes: {
         number: orderData.orderNumber,
         name: orderData.customerName,
@@ -47,7 +47,7 @@ export const createPacketaShipment = async (orderData: OrderData) => {
 export const generatePacketaLabel = async (packetId: string) => {
   try {
     const response = await packetaApi.post('/packet-label-pdf', {
-      apiKey: process.env.PACKETA_API_KEY,
+      apiPassword: process.env.PACKETA_API_PASSWORD,
       packetIds: [packetId],
       format: 'A4',
     });
@@ -62,7 +62,7 @@ export const generatePacketaLabel = async (packetId: string) => {
 export const generateMultipleLabels = async (packetIds: string[]) => {
   try {
     const response = await packetaApi.post('/packet-label-pdf', {
-      apiKey: process.env.PACKETA_API_KEY,
+      apiPassword: process.env.PACKETA_API_PASSWORD,
       packetIds: packetIds,
       format: 'A4',
     });
@@ -78,7 +78,7 @@ export const getPacketaStatus = async (packetId: string) => {
   try {
     const response = await packetaApi.get('/packet-status', {
       params: {
-        apiKey: process.env.PACKETA_API_KEY,
+        apiPassword: process.env.PACKETA_API_PASSWORD,
         packetId: packetId,
       }
     });

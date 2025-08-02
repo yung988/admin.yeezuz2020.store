@@ -159,10 +159,11 @@ export default function NewProductPage() {
                     id="price" 
                     type="number" 
                     step="0.01"
-                    placeholder="0" 
+                    placeholder="1600" 
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground">Zadejte cenu v korunách (např. 1600)</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sku">SKU</Label>
