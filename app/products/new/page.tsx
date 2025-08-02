@@ -80,12 +80,12 @@ export default function NewProductPage() {
     try {
       setLoading(true)
       
-      // Převod ceny na haléře
-      const priceInCents = Math.round(parseFloat(formData.price) * 100)
+      // Uložení ceny jako celé číslo korun (ne haléře/centy)
+      const priceInCrowns = Math.round(parseFloat(formData.price));
       
       const productPayload = {
         ...formData,
-        price: priceInCents,
+        price: priceInCrowns,
         variants: variants.filter(v => v.stock > 0) // Pouze varianty se skladem
       }
       

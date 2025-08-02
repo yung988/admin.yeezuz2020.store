@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { createPacketaShipment } from '@/lib/packeta';
+import { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from '@/lib/email/sendEmail';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
@@ -82,10 +83,16 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     .insert({
       customer_email: paymentIntent.metadata.customer_email || '',
       customer_name: paymentIntent.metadata.customer_name || '',
-      total_amount: paymentIntent.amount / 100, // Convert from cents
+      customer_phone: paymentIntent.metadata.customer_phone || '',
+      total_amount: paymentIntent.amount, // Store in cents as per database schema
       currency: paymentIntent.currency.toUpperCase(),
-      status: 'confirmed',
+      status: 'paid',
       payment_status: 'paid',
+      shipping_method: paymentIntent.metadata.packeta_pickup_point_id ? 'packeta' : 'standard',
+      shipping_cost: paymentIntent.metadata.packeta_pickup_point_id ? 7900 : 0, // 79 Kč in cents
+      packeta_pickup_point_id: paymentIntent.metadata.packeta_pickup_point_id || null,
+      packeta_pickup_point_name: paymentIntent.metadata.packeta_pickup_point_name || null,
+      packeta_pickup_point_address: paymentIntent.metadata.packeta_pickup_point_address || null,
       stripe_payment_id: paymentIntent.id,
       idempotency_key: idempotencyKey,
     })
@@ -99,11 +106,56 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
 
   console.log(`Order ${order.id} created and marked as paid and confirmed`);
   
-  // TODO: Add additional fulfillment logic:
-  // - Send confirmation email
-  // - Update inventory
-  // - Notify customer
-  // - Create Packeta shipment if needed
+  // Send confirmation email
+  try {
+    await sendOrderConfirmationEmail({
+      to: order.customer_email,
+      orderNumber: order.id.toString(),
+      customerName: order.customer_name,
+      orderDate: new Date(order.created_at).toLocaleDateString('cs-CZ'),
+      items: [
+        {
+          name: 'Objednávka', // In real implementation, get from order_items
+          quantity: 1,
+          price: order.total_amount,
+        }
+      ],
+      subtotal: order.total_amount,
+      shipping: 0, // Add shipping cost if available
+      total: order.total_amount,
+      isPacketa: !!paymentIntent.metadata.packeta_pickup_point_id,
+      packetaPickupPoint: paymentIntent.metadata.packeta_pickup_point_name,
+    });
+    console.log('Confirmation email sent successfully');
+  } catch (emailError) {
+    console.error('Failed to send confirmation email:', emailError);
+  }
+  
+  // Create Packeta shipment if pickup point is specified
+  if (paymentIntent.metadata.packeta_pickup_point_id) {
+    try {
+      const updatedOrder = {
+        ...order,
+        customer_phone: paymentIntent.metadata.customer_phone || '',
+        packeta_pickup_point_id: paymentIntent.metadata.packeta_pickup_point_id,
+      };
+      
+      await createPacketaShipmentForOrder(order.id, updatedOrder);
+      console.log('Packeta shipment created successfully');
+      
+      // Send shipping notification
+      await sendOrderStatusUpdateEmail({
+        to: order.customer_email,
+        orderNumber: order.id.toString(),
+        customerName: order.customer_name,
+        newStatus: 'processing',
+        message: 'Vaše objednávka je připravována k odeslání.',
+      });
+      console.log('Shipping notification sent successfully');
+    } catch (packetaError) {
+      console.error('Failed to create Packeta shipment:', packetaError);
+    }
+  }
 }
 
 // Handle failed payment
@@ -243,7 +295,7 @@ async function createPacketaShipmentForOrder(orderId: string, order: any) {
       customerEmail: order.customer_email,
       customerPhone: order.customer_phone || '',
       pickupPointId: order.packeta_pickup_point_id,
-      orderValue: order.total_amount,
+      orderValue: order.total_amount / 100, // Convert cents to koruny for Packeta
       weight: 1.0, // Default weight in kg - you might want to calculate this from order items
       cashOnDelivery: 0, // Set to 0 for prepaid orders
     };

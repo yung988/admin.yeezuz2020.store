@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdminOrEditor } from "@/lib/supabase-auth";
 import { getDashboardMetrics, getRecentOrders, getSalesData } from "@/lib/supabase-queries";
+import { formatPrice } from "@/lib/format";
 
 export default async function AdminDashboard() {
   const _user = await requireAdminOrEditor();
@@ -45,7 +46,7 @@ export default async function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(metrics.totalRevenue / 100).toLocaleString()} Kč
+{formatPrice(metrics.totalRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">Celkové tržby</p>
           </CardContent>
@@ -132,7 +133,7 @@ export default async function AdminDashboard() {
                     </div>
                     <div className="text-right space-y-1">
                       <p className="text-sm font-medium">
-                        {(order.total_amount / 100).toLocaleString()} Kč
+{formatPrice(order.total_amount)}
                       </p>
                       <Badge variant={getStatusBadge(order.status).variant}>
                         {getStatusBadge(order.status).label}

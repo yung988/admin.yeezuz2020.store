@@ -69,6 +69,8 @@ model orders {
   packeta_label_url            String?
   packeta_tracking_url         String?
   packeta_pickup_point_address String?
+  packeta_printed              Boolean?      @default(false)
+  packeta_printed_at           DateTime?     @db.Timestamp(6)
   idempotency_key              String?       @unique
   order_items                  order_items[]
 

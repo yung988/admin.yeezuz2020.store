@@ -7,6 +7,7 @@ import { ProductActionsMenu } from "@/components/ui/product-actions-menu"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getProductsWithVariants } from "@/lib/supabase-queries"
+import { formatPrice } from "@/lib/format"
 import { Plus, MoreHorizontal, Edit, Trash2, Search, Package, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -173,7 +174,7 @@ export default async function ProductsPage() {
                             )}
                           </TableCell>
                           <TableCell className="font-mono">
-                            {((product.price || 0) / 100).toLocaleString()} Kč
+{formatPrice(product.price || 0)}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">

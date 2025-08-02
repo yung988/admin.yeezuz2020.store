@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPacketaShipment } from '@/lib/packeta';
 import { createClient } from '@/utils/supabase/server';
+import { sendOrderStatusUpdateEmail } from '@/lib/email/sendEmail';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,6 +65,21 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.error('Chyba při aktualizaci objednávky:', updateError);
       return NextResponse.json({ error: 'Chyba při ukládání tracking informací' }, { status: 500 });
+    }
+
+    // Send shipping notification
+    try {
+      await sendOrderStatusUpdateEmail({
+        to: order.customer_email,
+        orderNumber: order.id.toString(),
+        customerName: order.customer_name,
+        newStatus: 'processing',
+        message: 'Vaše objednávka byla odeslána.',
+      });
+      console.log('Shipping notification email sent successfully');
+    } catch (emailError) {
+      console.error('Failed to send shipping notification email:', emailError);
+      // Don't fail the whole operation if email fails
     }
 
     return NextResponse.json({ 

@@ -109,7 +109,11 @@ export async function POST(request: NextRequest) {
       metadata: {
         customer_email: customerEmail || '',
         customer_name: customerName || '',
+        customer_phone: customerPhone || '',
         idempotency_key: finalIdempotencyKey,
+        packeta_pickup_point_id: packetaPickupPointId || '',
+        packeta_pickup_point_name: packetaPickupPointName || '',
+        packeta_pickup_point_address: packetaPickupPointAddress || '',
         // We'll create the order after successful payment
       },
       description: `Objednávka eshop Yeezuz2020`,

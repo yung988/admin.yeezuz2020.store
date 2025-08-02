@@ -181,7 +181,7 @@ export async function getDashboardMetrics() {
     const products = productsResult.data || [];
     
     // Kalkulace metrik
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0) / 100;
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -258,8 +258,8 @@ export async function getSalesData() {
       return orderDate >= date && orderDate < nextDay;
     });
     
-    // Sečíst tržby za den (převést z haléřů na koruny)
-    const dailySales = dayOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0) / 100;
+    // Sečíst tržby za den (hodnoty jsou v centech, formatPrice je převede na koruny)
+    const dailySales = dayOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
     
     last7Days.push({
       date: date.toISOString(),

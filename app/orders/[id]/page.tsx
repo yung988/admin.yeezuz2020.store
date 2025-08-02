@@ -84,9 +84,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const getStatusBadge = (status: string) => {
     const statusMap = {
       pending: { label: "Čeká na platbu", variant: "secondary" as const },
-      paid: { label: "Zaplaceno", variant: "default" as const },
+      confirmed: { label: "Potvrzeno", variant: "default" as const },
+      paid: { label: "Zaplaceno kartou", variant: "default" as const },
       shipped: { label: "Odesláno", variant: "outline" as const },
       delivered: { label: "Doručeno", variant: "default" as const },
+      cancelled: { label: "Zrušeno", variant: "destructive" as const },
     }
     return statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const }
   }
@@ -117,7 +119,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <Separator />
               <div>
                 <p className="font-medium mb-2">Způsob dopravy</p>
-                <p className="text-sm text-muted-foreground">{order.shipping_method || 'Neuvedeno'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {order.shipping_method === 'packeta' ? 'Zásilkovna' : 
+                   order.shipping_method === 'standard' ? 'Standardní doprava' :
+                   order.shipping_method || 'Neuvedeno'}
+                </p>
                 {order.packeta_pickup_point_name && (
                   <p className="text-sm text-muted-foreground">Výdejní místo: {order.packeta_pickup_point_name}</p>
                 )}

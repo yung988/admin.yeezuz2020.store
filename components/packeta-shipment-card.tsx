@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Package, Truck, ExternalLink } from "lucide-react"
+import { Package, Truck, ExternalLink, Printer } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface PacketaShipmentCardProps {

@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     // Získej objednávky s Packeta štítky pro daný den
     const { data: orders, error } = await supabase
       .from('orders')
-      .select('id, order_number, customer_name, customer_email, packeta_label_id, packeta_pickup_point_name, created_at')
+      .select('id, order_number, customer_name, customer_email, packeta_label_id, packeta_pickup_point_name, created_at, packeta_printed, packeta_printed_at')
       .not('packeta_label_id', 'is', null)
       .gte('created_at', startOfDay.toISOString())
       .lte('created_at', endOfDay.toISOString())
